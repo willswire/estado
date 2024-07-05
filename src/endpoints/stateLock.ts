@@ -1,28 +1,24 @@
 import {
 	OpenAPIRoute,
 	OpenAPIRouteSchema,
-	Query,
 	Path
 } from "@cloudflare/itty-router-openapi";
-import type { LockInfo } from "../types/terraform";
 
-export class StateCreate extends OpenAPIRoute {
+export class StateLock extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
 		tags: ["States"],
-		summary: "Updates the remote state in the durable storage. Supports locking.",
+		summary: "Lock or Unlock the remote state for edits.",
+		requestBody: ReadableStream,
 		parameters: {
 			projectName: Path(String, {
 				description: "Project name",
-			}),
-			ID: Query(String, {
-				description: "The state lock identifier",
-			}),
+			})
 		},
 		responses: {
 			"200": {
-				description: "Returns if the state was created successfully",
+				description: "Returns if the state was locked successfully",
 				schema: {
-					success: Boolean
+					success: Boolean,
 				},
 			},
 			"400": {
@@ -38,12 +34,6 @@ export class StateCreate extends OpenAPIRoute {
 					success: Boolean,
 					error: String,
 				},	
-			},
-			"423": {
-				description: "The requested state is currently locked",
-				schema: {
-					success: Boolean
-				},
 			},
 			"500": {
 				description: "Unable to determine username",
@@ -136,29 +126,6 @@ export class StateCreate extends OpenAPIRoute {
 		const key = `${username}/${projectName}.tfstate`
 		const id = env.TF_STATE_LOCK.idFromName(key);
 		const stub = env.TF_STATE_LOCK.get(id);
-		const response = await stub.fetch(request);
-		const info = (await response.json()) as LockInfo;
-
-		if (info.ID) {
-			const { ID } = data.params
-			if (info.ID !== ID) {
-				return Response.json(
-					{
-						success: false,
-						error: "The requested state is currently locked",
-					},
-					{
-						status: 423,
-					}
-				);
-			}
-		}
-
-		await env.TF_STATE_BUCKET.put(key, await request.arrayBuffer())
-
-		// return success
-		return {
-			success: true
-		};
+		return await stub.fetch(request);
 	}
 }

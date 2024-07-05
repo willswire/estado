@@ -3,29 +3,49 @@ import {
 	OpenAPIRouteSchema,
 	Path,
 } from "@cloudflare/itty-router-openapi";
-import { State } from "../types";
 
 export class StateFetch extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
 		tags: ["States"],
-		summary: "Get a single State by slug",
+		summary: "Returns the current remote state from the durable storage. Doesn't support locking",
 		parameters: {
-			stateSlug: Path(String, {
-				description: "State slug",
+			projectName: Path(String, {
+				description: "Project name",
 			}),
 		},
 		responses: {
 			"200": {
-				description: "Returns a single state if found",
+				description: "Returns state file",
 				schema: {
 					success: Boolean,
-					result: {
-						state: State,
-					},
+					content: {
+                            "application/json": {}
+                        }
 				},
 			},
-			"404": {
-				description: "State not found",
+			"204": {
+				description: "No state exists",
+				schema: {
+					success: Boolean,
+					error: String,
+				}
+			},
+			"400": {
+				description: "No project name specified",
+				schema: {
+					success: Boolean,
+					error: String,
+				},
+			},
+			"401": {
+				description: "Invalid authentication credentials",
+				schema: {
+					success: Boolean,
+					error: String,
+				},	
+			},
+			"500": {
+				description: "Unable to determine username",
 				schema: {
 					success: Boolean,
 					error: String,
@@ -40,35 +60,98 @@ export class StateFetch extends OpenAPIRoute {
 		context: any,
 		data: Record<string, any>
 	) {
-		// Retrieve the validated slug
-		const { stateSlug } = data.params;
+		// Retrieve the authorization details
+		const authorization = request.headers.get("Authorization");
 
-		// Implement your own object fetch here
-
-		const exists = true;
-
-		// @ts-ignore: check if the object exists
-		if (exists === false) {
+		if (!authorization) {
 			return Response.json(
 				{
 					success: false,
-					error: "Object not found",
+					error: "No authentication information provided",
 				},
 				{
-					status: 404,
+					status: 401,
+				}
+			);
+		}
+
+		const [basic, credentials] = authorization.split(" ");
+
+		if (basic !== "Basic") {
+			return Response.json(
+				{
+					success: false,
+					error: "Only basic authentication is supported",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		const [username, password] = Buffer.from(credentials, "base64")
+			.toString()
+			.split(":");
+
+		if (!username || username === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "Username cannot be empty",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		if (!password || password === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "Password cannot be empty",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		// Retrieve the validated slug
+		const { projectName } = data.params;
+
+		if (!projectName || projectName === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "No project name specified",
+				},
+				{
+					status: 400,
+				}
+			);
+		}
+
+		// Implement your own object fetch here
+		const key: String = `${username}/${projectName}.tfstate`
+		const state: R2ObjectBody = await env.TF_STATE_BUCKET.get(key);
+
+		// @ts-ignore: check if the object exists
+		if (state === null) {
+			return Response.json(
+				{
+					success: false,
+					error: "State file does not exist",
+				},
+				{
+					status: 204,
 				}
 			);
 		}
 
 		return {
 			success: true,
-			state: {
-				name: "my state",
-				slug: stateSlug,
-				description: "this needs to be done",
-				completed: false,
-				due_date: new Date().toISOString().slice(0, 10),
-			},
+			state: await state.arrayBuffer(),
 		};
 	}
 }

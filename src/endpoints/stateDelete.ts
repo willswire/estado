@@ -3,25 +3,49 @@ import {
 	OpenAPIRouteSchema,
 	Path,
 } from "@cloudflare/itty-router-openapi";
-import { State } from "../types";
+import type { LockInfo } from "../types/terraform";
 
 export class StateDelete extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
 		tags: ["States"],
 		summary: "Delete a State",
 		parameters: {
-			stateSlug: Path(String, {
-				description: "State slug",
+			projectName: Path(String, {
+				description: "Project name",
 			}),
 		},
 		responses: {
 			"200": {
 				description: "Returns if the state was deleted successfully",
 				schema: {
+					success: Boolean
+				},
+			},
+			"400": {
+				description: "No project name specified",
+				schema: {
 					success: Boolean,
-					result: {
-						state: State,
-					},
+					error: String,
+				},
+			},
+			"401": {
+				description: "Invalid authentication credentials",
+				schema: {
+					success: Boolean,
+					error: String,
+				},	
+			},
+			"423": {
+				description: "The requested state is currently locked",
+				schema: {
+					success: Boolean
+				},
+			},
+			"500": {
+				description: "Unable to determine username",
+				schema: {
+					success: Boolean,
+					error: String,
 				},
 			},
 		},
@@ -33,23 +57,104 @@ export class StateDelete extends OpenAPIRoute {
 		context: any,
 		data: Record<string, any>
 	) {
-		// Retrieve the validated slug
-		const { stateSlug } = data.params;
+		// Retrieve the authorization details
+		const authorization = request.headers.get("Authorization");
 
-		// Implement your own object deletion here
-
-		// Return the deleted state for confirmation
-		return {
-			result: {
-				state: {
-					name: "Build something awesome with Cloudflare Workers",
-					slug: stateSlug,
-					description: "Lorem Ipsum",
-					completed: true,
-					due_date: "2022-12-24",
+		if (!authorization) {
+			return Response.json(
+				{
+					success: false,
+					error: "No authentication information provided",
 				},
-			},
-			success: true,
+				{
+					status: 401,
+				}
+			);
+		}
+
+		const [basic, credentials] = authorization.split(" ");
+
+		if (basic !== "Basic") {
+			return Response.json(
+				{
+					success: false,
+					error: "Only basic authentication is supported",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		const [username, password] = Buffer.from(credentials, "base64")
+			.toString()
+			.split(":");
+
+		if (!username || username === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "Username cannot be empty",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		if (!password || password === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "Password cannot be empty",
+				},
+				{
+					status: 401,
+				}
+			);
+		}
+
+		// Retrieve the validated slug
+		const { projectName } = data.params;
+
+		if (!projectName || projectName === "") {
+			return Response.json(
+				{
+					success: false,
+					error: "No project name specified",
+				},
+				{
+					status: 400,
+				}
+			);
+		}
+
+		const key = `${username}/${projectName}.tfstate`
+		const id = env.TF_STATE_LOCK.idFromName(key);
+		const stub = env.TF_STATE_LOCK.get(id);
+		const response = await stub.fetch(request);
+		const info = (await response.json()) as LockInfo;
+
+		if (info.id) {
+			const { ID } = data.params
+			if (info.id !== ID) {
+				return Response.json(
+					{
+						success: false,
+						error: "The requested state is currently locked",
+					},
+					{
+						status: 423,
+					}
+				);
+			}
+		}
+
+		await env.TF_STATE_BUCKET.delete(key)
+
+		// return success
+		return {
+			success: true
 		};
 	}
 }
