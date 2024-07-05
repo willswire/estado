@@ -1,15 +1,15 @@
 import { OpenAPIRouter } from "@cloudflare/itty-router-openapi";
-import { TaskCreate } from "./endpoints/taskCreate";
-import { TaskDelete } from "./endpoints/taskDelete";
-import { TaskFetch } from "./endpoints/taskFetch";
+import { StateCreate } from "./endpoints/stateCreate";
+import { StateDelete } from "./endpoints/stateDelete";
+import { StateFetch } from "./endpoints/stateFetch";
 
 export const router = OpenAPIRouter({
 	docs_url: "/",
 });
 
-router.post("/api/tasks/", TaskCreate);
-router.get("/api/tasks/:taskSlug/", TaskFetch);
-router.delete("/api/tasks/:taskSlug/", TaskDelete);
+router.get("/states/:projectName", StateFetch);
+router.post("/states/:projectName", StateCreate);
+router.delete("/states/:projectName", StateDelete);
 
 // 404 for everything else
 router.all("*", () =>

@@ -3,29 +3,29 @@ import {
 	OpenAPIRouteSchema,
 	Path,
 } from "@cloudflare/itty-router-openapi";
-import { Task } from "../types";
+import { State } from "../types";
 
-export class TaskFetch extends OpenAPIRoute {
+export class StateFetch extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
-		tags: ["Tasks"],
-		summary: "Get a single Task by slug",
+		tags: ["States"],
+		summary: "Get a single State by slug",
 		parameters: {
-			taskSlug: Path(String, {
-				description: "Task slug",
+			stateSlug: Path(String, {
+				description: "State slug",
 			}),
 		},
 		responses: {
 			"200": {
-				description: "Returns a single task if found",
+				description: "Returns a single state if found",
 				schema: {
 					success: Boolean,
 					result: {
-						task: Task,
+						state: State,
 					},
 				},
 			},
 			"404": {
-				description: "Task not found",
+				description: "State not found",
 				schema: {
 					success: Boolean,
 					error: String,
@@ -41,7 +41,7 @@ export class TaskFetch extends OpenAPIRoute {
 		data: Record<string, any>
 	) {
 		// Retrieve the validated slug
-		const { taskSlug } = data.params;
+		const { stateSlug } = data.params;
 
 		// Implement your own object fetch here
 
@@ -62,9 +62,9 @@ export class TaskFetch extends OpenAPIRoute {
 
 		return {
 			success: true,
-			task: {
-				name: "my task",
-				slug: taskSlug,
+			state: {
+				name: "my state",
+				slug: stateSlug,
 				description: "this needs to be done",
 				completed: false,
 				due_date: new Date().toISOString().slice(0, 10),

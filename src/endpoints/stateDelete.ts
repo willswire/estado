@@ -3,24 +3,24 @@ import {
 	OpenAPIRouteSchema,
 	Path,
 } from "@cloudflare/itty-router-openapi";
-import { Task } from "../types";
+import { State } from "../types";
 
-export class TaskDelete extends OpenAPIRoute {
+export class StateDelete extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
-		tags: ["Tasks"],
-		summary: "Delete a Task",
+		tags: ["States"],
+		summary: "Delete a State",
 		parameters: {
-			taskSlug: Path(String, {
-				description: "Task slug",
+			stateSlug: Path(String, {
+				description: "State slug",
 			}),
 		},
 		responses: {
 			"200": {
-				description: "Returns if the task was deleted successfully",
+				description: "Returns if the state was deleted successfully",
 				schema: {
 					success: Boolean,
 					result: {
-						task: Task,
+						state: State,
 					},
 				},
 			},
@@ -34,16 +34,16 @@ export class TaskDelete extends OpenAPIRoute {
 		data: Record<string, any>
 	) {
 		// Retrieve the validated slug
-		const { taskSlug } = data.params;
+		const { stateSlug } = data.params;
 
 		// Implement your own object deletion here
 
-		// Return the deleted task for confirmation
+		// Return the deleted state for confirmation
 		return {
 			result: {
-				task: {
+				state: {
 					name: "Build something awesome with Cloudflare Workers",
-					slug: taskSlug,
+					slug: stateSlug,
 					description: "Lorem Ipsum",
 					completed: true,
 					due_date: "2022-12-24",
