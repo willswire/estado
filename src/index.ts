@@ -4,6 +4,8 @@ import { StateDelete } from "./endpoints/stateDelete";
 import { StateFetch } from "./endpoints/stateFetch";
 import { StateLock } from "./endpoints/stateLock";
 
+export { DurableState } from "./durableState";
+
 export const router = OpenAPIRouter({
 	docs_url: "/",
 });

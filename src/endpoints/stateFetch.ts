@@ -3,6 +3,7 @@ import {
 	OpenAPIRouteSchema,
 	Path,
 } from "@cloudflare/itty-router-openapi";
+import { Buffer } from 'node:buffer';
 
 export class StateFetch extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
@@ -16,19 +17,17 @@ export class StateFetch extends OpenAPIRoute {
 		responses: {
 			"200": {
 				description: "Returns state file",
-				schema: {
-					success: Boolean,
-					content: {
-                            "application/json": {}
-                        }
+				content: {
+					"application/json": {
+						schema: {
+							type: "object",
+							additionalProperties: true,
+						},
+					},
 				},
 			},
 			"204": {
-				description: "No state exists",
-				schema: {
-					success: Boolean,
-					error: String,
-				}
+				description: "State file does not exist"
 			},
 			"400": {
 				description: "No project name specified",
@@ -60,6 +59,7 @@ export class StateFetch extends OpenAPIRoute {
 		context: any,
 		data: Record<string, any>
 	) {
+		console.log("Handeling a state fetch...")
 		// Retrieve the authorization details
 		const authorization = request.headers.get("Authorization");
 
@@ -138,20 +138,13 @@ export class StateFetch extends OpenAPIRoute {
 
 		// @ts-ignore: check if the object exists
 		if (state === null) {
-			return Response.json(
-				{
-					success: false,
-					error: "State file does not exist",
-				},
-				{
-					status: 204,
-				}
-			);
+			return new Response(null, {status: 204})
 		}
 
-		return {
-			success: true,
-			state: await state.arrayBuffer(),
-		};
+		// Return the state JSON directly
+		return new Response(await state.text(), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
+		});
 	}
 }

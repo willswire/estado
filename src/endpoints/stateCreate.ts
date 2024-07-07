@@ -5,6 +5,7 @@ import {
 	Path
 } from "@cloudflare/itty-router-openapi";
 import type { LockInfo } from "../types/terraform";
+import { Buffer } from 'node:buffer';
 
 export class StateCreate extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
@@ -16,6 +17,7 @@ export class StateCreate extends OpenAPIRoute {
 			}),
 			ID: Query(String, {
 				description: "The state lock identifier",
+				required: false
 			}),
 		},
 		responses: {
@@ -61,6 +63,7 @@ export class StateCreate extends OpenAPIRoute {
 		context: any,
 		data: Record<string, any>
 	) {
+		console.log("Handeling a state create...")
 		// Retrieve the authorization details
 		const authorization = request.headers.get("Authorization");
 
@@ -119,7 +122,7 @@ export class StateCreate extends OpenAPIRoute {
 		}
 
 		// Retrieve the validated slug
-		const { projectName } = data.params;
+		const { projectName, ID } = data.params;
 
 		if (!projectName || projectName === "") {
 			return Response.json(
@@ -136,12 +139,10 @@ export class StateCreate extends OpenAPIRoute {
 		const key = `${username}/${projectName}.tfstate`
 		const id = env.TF_STATE_LOCK.idFromName(key);
 		const stub = env.TF_STATE_LOCK.get(id);
-		const response = await stub.fetch(request);
-		const info = (await response.json()) as LockInfo;
+		const lockInfo: LockInfo = await stub.getLockInfo()
 
-		if (info.ID) {
-			const { ID } = data.params
-			if (info.ID !== ID) {
+		if (lockInfo.ID) {
+			if (lockInfo.ID !== ID) {
 				return Response.json(
 					{
 						success: false,
@@ -154,11 +155,16 @@ export class StateCreate extends OpenAPIRoute {
 			}
 		}
 
-		await env.TF_STATE_BUCKET.put(key, await request.arrayBuffer())
+		await env.TF_STATE_BUCKET.put(key, await request.arrayBuffer());
 
-		// return success
-		return {
-			success: true
-		};
+		// Return success response
+		return Response.json(
+			{
+				success: true
+			},
+			{
+				status: 200,
+			}
+		);
 	}
 }

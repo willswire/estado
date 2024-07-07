@@ -4,6 +4,7 @@ import {
 	Path,
 } from "@cloudflare/itty-router-openapi";
 import type { LockInfo } from "../types/terraform";
+import { Buffer } from 'node:buffer';
 
 export class StateDelete extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
@@ -132,29 +133,30 @@ export class StateDelete extends OpenAPIRoute {
 		const key = `${username}/${projectName}.tfstate`
 		const id = env.TF_STATE_LOCK.idFromName(key);
 		const stub = env.TF_STATE_LOCK.get(id);
-		const response = await stub.fetch(request);
-		const info = (await response.json()) as LockInfo;
+		const lockInfo: LockInfo = await stub.getLockInfo()
 
-		if (info.id) {
-			const { ID } = data.params
-			if (info.id !== ID) {
-				return Response.json(
-					{
-						success: false,
-						error: "The requested state is currently locked",
-					},
-					{
-						status: 423,
-					}
-				);
-			}
+		if (lockInfo !== null) {
+			return Response.json(
+				{
+					success: false,
+					error: "The requested state is currently locked",
+				},
+				{
+					status: 423,
+				}
+			);
 		}
 
 		await env.TF_STATE_BUCKET.delete(key)
 
-		// return success
-		return {
-			success: true
-		};
+		// Return success response
+		return Response.json(
+			{
+				success: true
+			},
+			{
+				status: 200,
+			}
+		);
 	}
 }

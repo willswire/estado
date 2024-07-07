@@ -3,12 +3,13 @@ import {
 	OpenAPIRouteSchema,
 	Path
 } from "@cloudflare/itty-router-openapi";
+import type { LockInfo } from "../types/terraform";
+import { Buffer } from 'node:buffer';
 
 export class StateLock extends OpenAPIRoute {
 	static schema: OpenAPIRouteSchema = {
 		tags: ["States"],
 		summary: "Lock or Unlock the remote state for edits.",
-		requestBody: ReadableStream,
 		parameters: {
 			projectName: Path(String, {
 				description: "Project name",
@@ -19,6 +20,14 @@ export class StateLock extends OpenAPIRoute {
 				description: "Returns if the state was locked successfully",
 				schema: {
 					success: Boolean,
+					content: {
+						"application/json": {
+							schema: {
+								type: "object",
+								additionalProperties: true,
+							},
+						},
+					},
 				},
 			},
 			"400": {
@@ -30,6 +39,20 @@ export class StateLock extends OpenAPIRoute {
 			},
 			"401": {
 				description: "Invalid authentication credentials",
+				schema: {
+					success: Boolean,
+					error: String,
+				},	
+			},
+			"405": {
+				description: "Method not allowed",
+				schema: {
+					success: Boolean,
+					error: String,
+				},	
+			},
+			"423": {
+				description: "State is currently locked",
 				schema: {
 					success: Boolean,
 					error: String,
@@ -126,6 +149,74 @@ export class StateLock extends OpenAPIRoute {
 		const key = `${username}/${projectName}.tfstate`
 		const id = env.TF_STATE_LOCK.idFromName(key);
 		const stub = env.TF_STATE_LOCK.get(id);
-		return await stub.fetch(request);
+		const lockInfo: LockInfo = await stub.getLockInfo();
+		const newLock = (await request.json()) as LockInfo || null;
+
+		// set a isLocked flag? and do responses below the switch?
+		switch (request.method) {
+			case "GET":
+				return new Response(
+					JSON.stringify(lockInfo),
+					{
+						status: 200
+					}
+				)
+			case "PUT":
+			case "LOCK":
+				if (await stub.lock(newLock)) {
+					return Response.json(
+						{
+							success: true,
+							error: "Acquired state lock",
+						},
+						{
+							status: 200,
+						}
+					)
+				} else {
+					return Response.json(
+						{
+							success: false,
+							error: "State is currently locked",
+						},
+						{
+							status: 423,
+						}
+					)	
+				}
+			case "DELETE":
+			case "UNLOCK":
+				if (await stub.unlock(newLock)) {
+					return Response.json(
+						{
+							success: true,
+							error: "Deleted state lock",
+						},
+						{
+							status: 200,
+						}
+					)
+				} else {
+					return Response.json(
+						{
+							success: false,
+							error: "State is currently locked",
+						},
+						{
+							status: 423,
+						}
+					)	
+				}
+			default:
+				return Response.json(
+					{
+						success: false,
+						error: "Method not allowed",
+					},
+					{
+						status: 405,
+					}
+				);
+		}
 	}
 }
