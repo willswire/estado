@@ -1,25 +1,82 @@
-# Cloudflare Workers OpenAPI 3.1
+# Estado
 
-This is a Cloudflare Worker with OpenAPI 3.1 using [itty-router-openapi](https://github.com/cloudflare/itty-router-openapi).
+Estado is a project designed to manage Terraform State using the HTTP backend on Cloudflare Workers. It leverages Cloudflare’s serverless platform to provide a scalable, reliable, and efficient solution for handling Terraform State, complete with support for state locking. By utilizing Cloudflare Workers, Estado ensures high availability and low latency for state management, making it an excellent choice for teams looking to efficiently manage their Terraform infrastructure state with minimal operational overhead.
 
-This is an example project made to be used as a quick start into building OpenAPI compliant Workers that generates the
-`openapi.json` schema automatically from code and validates the incoming request to the defined parameters or request body.
+## Features
 
-## Get started
+- **Scalable and Reliable**: Built on Cloudflare Workers, Estado offers a highly scalable and reliable environment for managing Terraform State.
+- **State Locking**: Prevent concurrent state modifications with built-in support for state locking.
+- **Low Latency**: Leverage Cloudflare’s global network to ensure low latency state management.
+- **Serverless**: Reduce operational overhead with a serverless architecture that handles scaling and infrastructure management for you.
 
-1. Sign up for [Cloudflare Workers](https://workers.dev). The free tier is more than enough for most use cases.
-2. Clone this project and install dependencies with `npm install`
-3. Run `wrangler login` to login to your Cloudflare account in wrangler
-4. Run `wrangler deploy` to publish the API to Cloudflare Workers
+## Getting Started
 
-## Project structure
+### Prerequisites
 
-1. Your main router is defined in `src/index.ts`.
-2. Each endpoint has its own file in `src/endpoints/`.
-3. For more information read the [itty-router-openapi official documentation](https://cloudflare.github.io/itty-router-openapi/).
+- A Cloudflare account
+- Terraform (or OpenTofu) installed on your local machine
+- Node.js installed on your local machine
 
-## Development
+### Installation
 
-1. Run `wrangler dev` to start a local instance of the API.
-2. Open `http://localhost:9000/` in your browser to see the Swagger interface where you can try the endpoints.
-3. Changes made in the `src/` folder will automatically trigger the server to reload, you only need to refresh the Swagger interface.
+1. **Clone the Repository**
+
+   ```sh
+   git clone https://github.com/willswire/estado.git
+   cd estado
+   ```
+
+2. **Install Dependencies**
+
+   ```sh
+   npm install
+   ```
+
+3. **Configure Cloudflare Workers**
+
+   Set up your Cloudflare Workers environment by updating the `wrangler.toml` file in the project root and configure it with your Cloudflare account details.
+
+   ```toml
+    name = "estado"
+    main = "src/index.ts"
+    compatibility_date = "2024-07-01"
+    compatibility_flags = [ "nodejs_compat" ]
+
+    [[durable_objects.bindings]]
+    name = "TF_STATE_LOCK"
+    class_name = "DurableState"
+
+    [[migrations]]
+    tag = "v1"
+    new_classes = ["DurableState"]
+
+    [[r2_buckets]]
+    binding = "TF_STATE_BUCKET"
+    bucket_name = "estado"
+   ```
+
+4. **Deploy to Cloudflare Workers**
+
+   ```sh
+   npx wrangler publish
+   ```
+
+## Example Configuration
+
+In your Terraform configuration, you can configure the HTTP backend to use Estado:
+
+```hcl
+terraform {
+  backend "http" {
+    address         = "https://your-worker-url/states/myproject"
+    lock_address    = "https://your-worker-url/states/myproject/lock"
+    unlock_address  = "https://your-worker-url/states/myproject/lock"
+  }
+}
+```
+
+Replace `https://your-worker-url` with the URL of your deployed Cloudflare Worker.
+
+## Contributing
+
+If you have suggestions, bug reports, or feature requests, please open an issue or submit a pull request on GitHub.

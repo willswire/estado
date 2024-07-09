@@ -1,29 +1,35 @@
 import { OpenAPIRouter } from "@cloudflare/itty-router-openapi";
-import { TaskCreate } from "./endpoints/taskCreate";
-import { TaskDelete } from "./endpoints/taskDelete";
-import { TaskFetch } from "./endpoints/taskFetch";
-import { TaskList } from "./endpoints/taskList";
+import { StateCreate } from "./endpoints/stateCreate";
+import { StateDelete } from "./endpoints/stateDelete";
+import { StateFetch } from "./endpoints/stateFetch";
+import { StateLock } from "./endpoints/stateLock";
+import { DurableState } from "./durableState";
+
+export { DurableState };
 
 export const router = OpenAPIRouter({
-	docs_url: "/",
+    docs_url: "/",
 });
 
-router.get("/states/:projectName", TaskList);
-router.post("/api/tasks/", TaskCreate);
-router.get("/api/tasks/:taskSlug/", TaskFetch);
-router.delete("/api/tasks/:taskSlug/", TaskDelete);
+router.all("*", (request) => {
+    console.log(`Received request: ${request.method} ${request.url}`);
+});
 
-// 404 for everything else
+router.get("/states/:projectName", StateFetch);
+router.post("/states/:projectName", StateCreate);
+router.delete("/states/:projectName", StateDelete);
+router.all("/states/:projectName/lock", StateLock);
+
 router.all("*", () =>
-	Response.json(
-		{
-			success: false,
-			error: "Route not found",
-		},
-		{ status: 404 }
-	)
+    Response.json(
+        {
+            success: false,
+            error: "Route not found",
+        },
+        { status: 404 }
+    )
 );
 
 export default {
-	fetch: router.handle,
+    fetch: router.handle,
 } satisfies ExportedHandler;
