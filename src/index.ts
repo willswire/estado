@@ -10,12 +10,15 @@ export const router = OpenAPIRouter({
 	docs_url: "/",
 });
 
+router.all("*", (request) => {
+    console.log(`Received request: ${request.method} ${request.url}`);
+});
+
 router.get("/states/:projectName", StateFetch);
 router.post("/states/:projectName", StateCreate);
 router.delete("/states/:projectName", StateDelete);
 router.all("/states/:projectName/lock", StateLock)
 
-// 404 for everything else
 router.all("*", () =>
 	Response.json(
 		{
