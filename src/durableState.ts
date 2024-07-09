@@ -1,4 +1,3 @@
-// durableState.ts
 import type { LockInfo } from "./types/terraform";
 import { DurableObject } from "cloudflare:workers";
 

@@ -4,7 +4,7 @@ import {
     OpenAPIRouteSchema,
     Path
 } from "@cloudflare/itty-router-openapi";
-import { checkAuthorization, createResponse } from '../utils';
+import { checkAuthorization } from '../utils';
 
 export class StateDelete extends OpenAPIRoute {
     static schema: OpenAPIRouteSchema = {
@@ -19,41 +19,25 @@ export class StateDelete extends OpenAPIRoute {
             "200": {
                 description: "State deleted successfully",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string", nullable: true },
-                    }
+                    type: "string"
                 }
             },
             "400": {
                 description: "No project name specified",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             },
             "401": {
                 description: "Invalid authentication credentials",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             },
             "423": {
                 description: "State is currently locked",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             }
         }
@@ -67,14 +51,14 @@ export class StateDelete extends OpenAPIRoute {
     ) {
         const auth = checkAuthorization(request);
         if (!auth) {
-            return createResponse(false, 401, "Invalid authentication credentials");
+            return new Response("Invalid authentication credentials", {status: 401});
         }
 
         const { username } = auth;
         const { projectName } = data.params;
 
         if (!projectName) {
-            return createResponse(false, 400, "No project name specified");
+            return new Response("No project name specified", {status: 400});
         }
 
         const key = `${username}/${projectName}.tfstate`;
@@ -84,13 +68,13 @@ export class StateDelete extends OpenAPIRoute {
 
         if (lockInfo) {
             console.log(`State is currently locked by ${lockInfo.ID}`);
-            return createResponse(false, 423, "State is currently locked");
+            return new Response("State is currently locked", {status: 423});
         }
 
-        await stub.delete();
+        await stub.unlock();
 
-        console.log("Deleted state data for", projectName);
+        console.log("Unlocked state for", projectName);
 
-        return createResponse(true, 200, "State deleted successfully");
+        return new Response("State unlocked successfully");
     }
 }

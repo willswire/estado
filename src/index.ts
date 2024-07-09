@@ -3,11 +3,12 @@ import { StateCreate } from "./endpoints/stateCreate";
 import { StateDelete } from "./endpoints/stateDelete";
 import { StateFetch } from "./endpoints/stateFetch";
 import { StateLock } from "./endpoints/stateLock";
+import { DurableState } from "./durableState";
 
-export { DurableState } from "./durableState";
+export { DurableState };
 
 export const router = OpenAPIRouter({
-	docs_url: "/",
+    docs_url: "/",
 });
 
 router.all("*", (request) => {
@@ -17,18 +18,18 @@ router.all("*", (request) => {
 router.get("/states/:projectName", StateFetch);
 router.post("/states/:projectName", StateCreate);
 router.delete("/states/:projectName", StateDelete);
-router.all("/states/:projectName/lock", StateLock)
+router.all("/states/:projectName/lock", StateLock);
 
 router.all("*", () =>
-	Response.json(
-		{
-			success: false,
-			error: "Route not found",
-		},
-		{ status: 404 }
-	)
+    Response.json(
+        {
+            success: false,
+            error: "Route not found",
+        },
+        { status: 404 }
+    )
 );
 
 export default {
-	fetch: router.handle,
+    fetch: router.handle,
 } satisfies ExportedHandler;

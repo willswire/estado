@@ -4,7 +4,7 @@ import {
     OpenAPIRouteSchema,
     Path
 } from "@cloudflare/itty-router-openapi";
-import { checkAuthorization, createResponse } from '../utils';
+import { checkAuthorization } from '../utils';
 
 export class StateFetch extends OpenAPIRoute {
     static schema: OpenAPIRouteSchema = {
@@ -26,21 +26,13 @@ export class StateFetch extends OpenAPIRoute {
             "400": {
                 description: "No project name specified",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             },
             "401": {
                 description: "Invalid authentication credentials",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             }
         }
@@ -54,14 +46,14 @@ export class StateFetch extends OpenAPIRoute {
     ) {
         const auth = checkAuthorization(request);
         if (!auth) {
-            return createResponse(false, 401, "Invalid authentication credentials");
+            return new Response("Invalid authentication credentials", {status: 401})
         }
 
         const { username } = auth;
         const { projectName } = data.params;
 
         if (!projectName) {
-            return createResponse(false, 400, "No project name specified");
+            return new Response("No project name specified", {status: 400})
         }
 
 		// Implement your own object fetch here

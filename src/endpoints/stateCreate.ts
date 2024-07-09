@@ -5,7 +5,7 @@ import {
     Path,
 	Query
 } from "@cloudflare/itty-router-openapi";
-import { checkAuthorization, createResponse, getRequestData } from '../utils';
+import { checkAuthorization } from '../utils';
 
 export class StateCreate extends OpenAPIRoute {
     static schema: OpenAPIRouteSchema = {
@@ -24,31 +24,19 @@ export class StateCreate extends OpenAPIRoute {
             "200": {
                 description: "State created or updated successfully",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string", nullable: true },
-                    }
+                    type: "string"
                 }
             },
             "400": {
                 description: "No project name specified",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             },
             "401": {
                 description: "Invalid authentication credentials",
                 schema: {
-                    type: "object",
-                    properties: {
-                        success: { type: "boolean" },
-                        error: { type: "string" },
-                    }
+                    type: "string"
                 }
             }
         }
@@ -62,19 +50,19 @@ export class StateCreate extends OpenAPIRoute {
     ) {
         const auth = checkAuthorization(request);
         if (!auth) {
-            return createResponse(false, 401, "Invalid authentication credentials");
+            return new Response("Invalid authentication credentials", {status: 401});
         }
 
         const { username } = auth;
         const { projectName } = data.params;
 
         if (!projectName) {
-            return createResponse(false, 400, "No project name specified");
+            return new Response("No project name specified", {status: 400});
         }
 
         const requestData = await request.arrayBuffer();
         if (!requestData) {
-            return createResponse(false, 400, "Invalid request data");
+            return new Response("Invalid request data", {status: 400});
         }
 
 		const key = `${username}/${projectName}.tfstate`
@@ -82,6 +70,6 @@ export class StateCreate extends OpenAPIRoute {
 
         console.log("Created or updated state data for", projectName);
 
-        return createResponse(true, 200, "State created or updated successfully");
+        return new Response("State created or updated successfully");
     }
 }

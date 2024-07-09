@@ -21,19 +21,3 @@ export function checkAuthorization(request: Request): { username: string, passwo
 
     return { username, password };
 }
-
-export function createResponse(success: boolean, status: number, error?: string) {
-    return new Response(
-        JSON.stringify({ success, error }),
-        { status }
-    );
-}
-
-export async function getRequestData(request: Request) {
-    try {
-        return await request.json();
-    } catch (e) {
-        console.log("Error parsing request JSON:", e);
-        return null;
-    }
-}
