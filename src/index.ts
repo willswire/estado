@@ -8,28 +8,28 @@ import { DurableState } from "./durableState";
 export { DurableState };
 
 export const router = OpenAPIRouter({
-    docs_url: "/",
+  docs_url: "/docs",
 });
 
-router.all("*", (request) => {
-    console.log(`Received request: ${request.method} ${request.url}`);
+router.all("*", (request: Request) => {
+  console.log(`Received request: ${request.method} ${request.url}`);
 });
 
-router.get("/states/:projectName", StateFetch);
-router.post("/states/:projectName", StateCreate);
-router.delete("/states/:projectName", StateDelete);
-router.all("/states/:projectName/lock", StateLock);
+router.get("/:projectName", StateFetch);
+router.post("/:projectName", StateCreate);
+router.delete("/:projectName", StateDelete);
+router.all("/:projectName/lock", StateLock);
 
 router.all("*", () =>
-    Response.json(
-        {
-            success: false,
-            error: "Route not found",
-        },
-        { status: 404 }
-    )
+  Response.json(
+    {
+      success: false,
+      error: "Route not found",
+    },
+    { status: 404 },
+  ),
 );
 
 export default {
-    fetch: router.handle,
+  fetch: router.handle,
 } satisfies ExportedHandler;
