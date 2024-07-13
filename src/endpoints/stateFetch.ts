@@ -3,6 +3,7 @@ import {
   OpenAPIRouteSchema,
   Path,
 } from "@cloudflare/itty-router-openapi";
+import type { Env } from "../types/worker-configuration";
 
 export class StateFetch extends OpenAPIRoute {
   static schema: OpenAPIRouteSchema = {
@@ -32,9 +33,9 @@ export class StateFetch extends OpenAPIRoute {
 
   async handle(
     request: Request,
-    env: any,
-    context: any,
-    data: Record<string, any>,
+    env: Env,
+    context: ExecutionContext,
+    data: { params: { projectName: string } },
   ) {
     const { projectName } = data.params;
 
@@ -43,10 +44,9 @@ export class StateFetch extends OpenAPIRoute {
     }
 
     // Implement your own object fetch here
-    const key: String = `${projectName}.tfstate`;
+    const key: string = `${projectName}.tfstate`;
     const state: R2ObjectBody = await env.TF_STATE_BUCKET.get(key);
 
-    // @ts-ignore: check if the object exists
     if (state === null) {
       return new Response(null, { status: 204 });
     }
