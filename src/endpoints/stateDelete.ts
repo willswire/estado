@@ -3,6 +3,7 @@ import {
   OpenAPIRouteSchema,
   Path,
 } from "@cloudflare/itty-router-openapi";
+import type { Env } from "../types/worker-configuration";
 
 export class StateDelete extends OpenAPIRoute {
   static schema: OpenAPIRouteSchema = {
@@ -37,9 +38,9 @@ export class StateDelete extends OpenAPIRoute {
 
   async handle(
     request: Request,
-    env: any,
-    context: any,
-    data: Record<string, any>,
+    env: Env,
+    context: ExecutionContext,
+    data: { params: { projectName: string } },
   ) {
     const { projectName } = data.params;
 
