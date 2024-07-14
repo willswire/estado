@@ -45,7 +45,7 @@ export class StateDelete extends OpenAPIRoute {
     const { projectName } = data.params;
 
     if (!projectName) {
-      return new Response("No project name specified", { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
     const key = `${projectName}.tfstate`;
@@ -55,13 +55,13 @@ export class StateDelete extends OpenAPIRoute {
 
     if (lockInfo) {
       console.log(`State is currently locked by ${lockInfo.ID}`);
-      return new Response("State is currently locked", { status: 423 });
+      return new Response(null, { status: 423 });
     }
 
     await stub.unlock();
 
     console.log("Unlocked state for", projectName);
 
-    return new Response("State unlocked successfully");
+    return new Response(null, { status: 200 });
   }
 }

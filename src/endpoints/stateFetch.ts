@@ -40,7 +40,7 @@ export class StateFetch extends OpenAPIRoute {
     const { projectName } = data.params;
 
     if (!projectName) {
-      return new Response("No project name specified", { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
     // Implement your own object fetch here

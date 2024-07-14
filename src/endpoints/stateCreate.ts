@@ -50,19 +50,31 @@ export class StateCreate extends OpenAPIRoute {
     const { projectName } = data.params;
 
     if (!projectName) {
-      return new Response("No project name specified", { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
-    const requestData = await request.arrayBuffer();
-    if (!requestData) {
-      return new Response("Invalid request data", { status: 400 });
+    const requestBody = await request.clone().text();
+
+    if (!isValidJSON(requestBody)) {
+      return new Response(null, { status: 415 });
     }
+
+    const arrayBuffer = await request.arrayBuffer();
 
     const key = `${projectName}.tfstate`;
-    await env.TF_STATE_BUCKET.put(key, requestData);
+    await env.TF_STATE_BUCKET.put(key, arrayBuffer);
 
     console.log("Created or updated state data for", projectName);
 
-    return new Response("State created or updated successfully");
+    return new Response(null, { status: 200 });
+  }
+}
+
+function isValidJSON(jsonString: string): boolean {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (e) {
+    return false;
   }
 }

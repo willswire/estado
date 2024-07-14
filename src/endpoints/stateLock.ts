@@ -58,7 +58,7 @@ export class StateLock extends OpenAPIRoute {
     const { projectName } = data.params;
 
     if (!projectName) {
-      return new Response("No project name specified", { status: 400 });
+      return new Response(null, { status: 400 });
     }
 
     const key = `${projectName}.tfstate`;
@@ -73,19 +73,19 @@ export class StateLock extends OpenAPIRoute {
       case "PUT":
       case "LOCK":
         if (await stub.lock(newLock)) {
-          return new Response("Acquired state lock");
+          return new Response(null, { status: 200 });
         } else {
-          return new Response("State is currently locked", { status: 423 });
+          return new Response(null, { status: 423 });
         }
       case "DELETE":
       case "UNLOCK":
         if (await stub.unlock(newLock)) {
-          return new Response("Unlocked state");
+          return new Response(null, { status: 200 });
         } else {
-          return new Response("State is currently locked", { status: 423 });
+          return new Response(null, { status: 423 });
         }
       default:
-        return new Response("Method not allowed", { status: 405 });
+        return new Response(null, { status: 405 });
     }
   }
 }
