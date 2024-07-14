@@ -5,6 +5,7 @@ import {
 } from "@cloudflare/itty-router-openapi";
 import type { LockInfo } from "../types/terraform";
 import type { Env } from "../types/worker-configuration";
+import { DurableState } from "../durableState";
 
 export class StateLock extends OpenAPIRoute {
   static schema: OpenAPIRouteSchema = {
@@ -18,37 +19,26 @@ export class StateLock extends OpenAPIRoute {
     responses: {
       "200": {
         description: "Returns if the state was locked successfully",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
       },
       "400": {
         description: "No project name specified",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
       },
       "405": {
         description: "Method not allowed",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
       },
       "423": {
         description: "State is currently locked",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
       },
       "500": {
         description: "Unable to determine username",
-        schema: {
-          type: "string",
-        },
+        schema: { type: "string" },
       },
     },
   };
-
   async handle(
     request: Request,
     env: Env,
@@ -56,20 +46,24 @@ export class StateLock extends OpenAPIRoute {
     data: { params: { projectName: string } },
   ) {
     const { projectName } = data.params;
+    const key = `${projectName}.tfstate`;
+    const id = env.TF_STATE_LOCK.idFromName(key);
+    const stub = env.TF_STATE_LOCK.get(id) as unknown as DurableState; // Casting to DurableState
 
-    if (!projectName) {
+    if (request.method === "GET") {
+      const lockInfo: LockInfo = await stub.getLockInfo();
+      return new Response(JSON.stringify(lockInfo), { status: 200 });
+    }
+
+    let requestBody = await request.clone().text();
+
+    if (!isValidJSON(requestBody)) {
       return new Response(null, { status: 400 });
     }
 
-    const key = `${projectName}.tfstate`;
-    const id = env.TF_STATE_LOCK.idFromName(key);
-    const stub = env.TF_STATE_LOCK.get(id);
-    const lockInfo: LockInfo = await stub.getLockInfo();
-    const newLock = ((await request.json()) as LockInfo) || null;
+    const newLock = (await request.json()) as LockInfo;
 
     switch (request.method) {
-      case "GET":
-        return new Response(JSON.stringify(lockInfo), { status: 200 });
       case "PUT":
       case "LOCK":
         if (await stub.lock(newLock)) {
@@ -87,5 +81,14 @@ export class StateLock extends OpenAPIRoute {
       default:
         return new Response(null, { status: 405 });
     }
+  }
+}
+
+function isValidJSON(jsonString: string): boolean {
+  try {
+    JSON.parse(jsonString);
+    return true;
+  } catch (e) {
+    return false;
   }
 }

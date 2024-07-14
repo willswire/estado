@@ -48,11 +48,6 @@ export class StateCreate extends OpenAPIRoute {
     data: { params: { projectName: string; ID?: string } },
   ) {
     const { projectName } = data.params;
-
-    if (!projectName) {
-      return new Response(null, { status: 400 });
-    }
-
     const requestBody = await request.clone().text();
 
     if (!isValidJSON(requestBody)) {

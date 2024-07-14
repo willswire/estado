@@ -43,11 +43,6 @@ export class StateDelete extends OpenAPIRoute {
     data: { params: { projectName: string } },
   ) {
     const { projectName } = data.params;
-
-    if (!projectName) {
-      return new Response(null, { status: 400 });
-    }
-
     const key = `${projectName}.tfstate`;
     const id = env.TF_STATE_LOCK.idFromName(key);
     const stub = env.TF_STATE_LOCK.get(id);
