@@ -38,12 +38,6 @@ export class StateFetch extends OpenAPIRoute {
     data: { params: { projectName: string } },
   ) {
     const { projectName } = data.params;
-
-    if (!projectName) {
-      return new Response("No project name specified", { status: 400 });
-    }
-
-    // Implement your own object fetch here
     const key: string = `${projectName}.tfstate`;
     const state: R2ObjectBody = await env.TF_STATE_BUCKET.get(key);
 

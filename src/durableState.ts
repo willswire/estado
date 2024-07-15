@@ -3,7 +3,8 @@ import { DurableObject } from "cloudflare:workers";
 
 export class DurableState extends DurableObject {
   async lock(info: LockInfo): Promise<boolean> {
-    const currentLock: LockInfo = (await this.ctx.storage.get("lock")) || null;
+    const currentLock: LockInfo =
+      ((await this.ctx.storage.get("lock")) as LockInfo) || null;
     if (currentLock === null) {
       await this.ctx.storage.put("lock", info);
       console.log("State locked successfully by", info.ID);
@@ -18,7 +19,8 @@ export class DurableState extends DurableObject {
   }
 
   async unlock(info: LockInfo): Promise<boolean> {
-    const currentLock: LockInfo = (await this.ctx.storage.get("lock")) || null;
+    const currentLock: LockInfo =
+      ((await this.ctx.storage.get("lock")) as LockInfo) || null;
     if (currentLock && currentLock.ID === info.ID) {
       await this.ctx.storage.delete("lock");
       console.log("State unlocked successfully by", info.ID);
@@ -33,7 +35,8 @@ export class DurableState extends DurableObject {
   }
 
   async getLockInfo(): Promise<LockInfo> {
-    const currentLock: LockInfo = (await this.ctx.storage.get("lock")) || null;
+    const currentLock: LockInfo =
+      ((await this.ctx.storage.get("lock")) as LockInfo) || null;
     console.log("Current lock info:", currentLock);
     return currentLock;
   }

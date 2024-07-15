@@ -20,15 +20,7 @@ router.post("/:projectName", StateCreate);
 router.delete("/:projectName", StateDelete);
 router.all("/:projectName/lock", StateLock);
 
-router.all("*", () =>
-  Response.json(
-    {
-      success: false,
-      error: "Route not found",
-    },
-    { status: 404 },
-  ),
-);
+router.all("*", () => new Response(null, { status: 404 }));
 
 export default {
   fetch: router.handle,
