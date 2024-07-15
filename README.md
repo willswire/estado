@@ -1,5 +1,9 @@
 # 📐 Estado
 
+[![CodeQL](https://github.com/willswire/estado/actions/workflows/codeql.yml/badge.svg)](https://github.com/willswire/estado/actions/workflows/codeql.yml)
+[![Code Coverage](https://github.com/willswire/estado/actions/workflows/coverage.yml/badge.svg)](https://github.com/willswire/estado/actions/workflows/coverage.yml)
+[![Deploy](https://github.com/willswire/estado/actions/workflows/deploy.yml/badge.svg)](https://github.com/willswire/estado/actions/workflows/deploy.yml)
+
 Estado is a project designed to manage Terraform State using the HTTP backend on Cloudflare Workers. It leverages Cloudflare’s serverless platform to provide a scalable, reliable, and efficient solution for handling Terraform State, complete with support for state locking.
 
 ## Features
