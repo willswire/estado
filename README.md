@@ -1,6 +1,6 @@
-# Estado
+# 📐 Estado
 
-Estado is a project designed to manage Terraform State using the HTTP backend on Cloudflare Workers. It leverages Cloudflare’s serverless platform to provide a scalable, reliable, and efficient solution for handling Terraform State, complete with support for state locking. By utilizing Cloudflare Workers, Estado ensures high availability and low latency for state management, making it an excellent choice for teams looking to efficiently manage their Terraform infrastructure state with minimal operational overhead.
+Estado is a project designed to manage Terraform State using the HTTP backend on Cloudflare Workers. It leverages Cloudflare’s serverless platform to provide a scalable, reliable, and efficient solution for handling Terraform State, complete with support for state locking.
 
 ## Features
 
@@ -34,7 +34,7 @@ Estado is a project designed to manage Terraform State using the HTTP backend on
 
 3. **Configure Cloudflare Workers**
 
-   Set up your Cloudflare Workers environment by updating the `wrangler.toml` file in the project root and configure it with your Cloudflare account details.
+   Set up your Cloudflare Workers environment by updating the `wrangler.toml` file in the project root with your Cloudflare account details.
 
    ```toml
     name = "estado"
@@ -61,21 +61,43 @@ Estado is a project designed to manage Terraform State using the HTTP backend on
    npx wrangler publish
    ```
 
-## Example Configuration
+## Configuration
 
 In your Terraform configuration, you can configure the HTTP backend to use Estado:
 
 ```hcl
 terraform {
   backend "http" {
-    address         = "https://your-worker-url/states/myproject"
-    lock_address    = "https://your-worker-url/states/myproject/lock"
-    unlock_address  = "https://your-worker-url/states/myproject/lock"
+    address         = "https://your-worker-url/myproject"
+    lock_address    = "https://your-worker-url/myproject/lock"
+    unlock_address  = "https://your-worker-url/myproject/lock"
   }
 }
 ```
 
 Replace `https://your-worker-url` with the URL of your deployed Cloudflare Worker.
+
+## Deployment
+
+By using Cloudflare's Zero Trust framework, you can create a policy for your deployed endpoint that enhances security. Follow these steps to set up Zero Trust for your Estado endpoint:
+
+1. **Log in to Cloudflare Dashboard**
+
+   Visit the Cloudflare dashboard and navigate to the Zero Trust section.
+
+2. **Create an Application**
+
+   Define a new application in the Zero Trust dashboard. Set the application type to web and enter the URL of your Estado endpoint.
+
+3. **Configure Access Policies**
+
+   Create an access policy to control who can access your Estado endpoint. You can define rules based on identity, including allowing specific users, groups, or IP addresses. You can also enforce multi-factor authentication (MFA) for additional security.
+
+4. **Deploy Policies**
+
+   Save and deploy the configured access policies. Cloudflare will now enforce these policies for any requests hitting your Estado endpoint.
+
+By implementing Cloudflare Zero Trust, you ensure that only authorized users can access your remote state endpoint, protecting your Terraform state from unauthorized access and potential threats.
 
 ## Contributing
 

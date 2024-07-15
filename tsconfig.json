@@ -6,6 +6,7 @@
     "lib": ["esnext"],
     "strict": true,
     "types": [
+      "@types/node",
       "@cloudflare/workers-types/experimental",
       "@cloudflare/vitest-pool-workers"
     ],

@@ -173,4 +173,9 @@ dist
 .wrangler
 
 # terraform providers
+
 .terraform/
+
+# macOS dotfiles
+
+.DS_Store
