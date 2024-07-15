@@ -1,6 +1,6 @@
 {
-  "name": "cloudflare-workers-openapi",
-  "version": "0.0.1",
+  "name": "estado",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
