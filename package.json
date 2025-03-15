@@ -18,6 +18,6 @@
     "@cloudflare/vitest-pool-workers": "^0.4.11",
     "@cloudflare/workers-types": "^4.20240620.0",
     "@vitest/coverage-istanbul": "^1.5.3",
-    "wrangler": "^3.60.3"
+    "wrangler": "^4.0.0"
   }
 }
