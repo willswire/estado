@@ -48,10 +48,11 @@ export class StateLock extends OpenAPIRoute {
     const { projectName } = data.params;
     const key = `${projectName}.tfstate`;
     const id = env.TF_STATE_LOCK.idFromName(key);
-    const stub = env.TF_STATE_LOCK.get(id) as unknown as DurableState; // Casting to DurableState
+    const stub = env.TF_STATE_LOCK.get(id);
 
     if (request.method === "GET") {
-      const lockInfo: LockInfo = await stub.getLockInfo();
+      const response = await stub.fetch("http://internal/lock");
+      const lockInfo = await response.json() as LockInfo;
       return new Response(JSON.stringify(lockInfo), { status: 200 });
     }
 
@@ -66,14 +67,22 @@ export class StateLock extends OpenAPIRoute {
     switch (request.method) {
       case "PUT":
       case "LOCK":
-        if (await stub.lock(newLock)) {
+        const lockResponse = await stub.fetch("http://internal/lock", {
+          method: "POST",
+          body: JSON.stringify(newLock)
+        });
+        if (lockResponse.status === 200) {
           return new Response(null, { status: 200 });
         } else {
           return new Response(null, { status: 423 });
         }
       case "DELETE":
       case "UNLOCK":
-        if (await stub.unlock(newLock)) {
+        const unlockResponse = await stub.fetch("http://internal/unlock", {
+          method: "POST",
+          body: JSON.stringify(newLock)
+        });
+        if (unlockResponse.status === 200) {
           return new Response(null, { status: 200 });
         } else {
           return new Response(null, { status: 423 });
