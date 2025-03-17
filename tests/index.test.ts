@@ -245,6 +245,19 @@ describe("Estado Worker", () => {
 
       expect(response.status).toBe(405);
     });
+    
+    it("should return 404 for unknown Durable Object endpoints", async () => {
+      // Create a custom request to access an unknown path in the Durable Object
+      // First get the stub ID
+      const key = `myproject.tfstate`;
+      const id = env.TF_STATE_LOCK.idFromName(key);
+      const stub = env.TF_STATE_LOCK.get(id);
+      
+      // Send a request to an unknown path
+      const response = await stub.fetch("http://internal/unknown-path");
+      
+      expect(response.status).toBe(404);
+    });
 
     afterAll(async () => {
       const request = new IncomingRequest("http://example.com/myproject/lock", {

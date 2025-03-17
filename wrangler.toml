@@ -16,7 +16,7 @@ class_name = "DurableState"
 # Durable Object migrations.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#migrations
 [[migrations]]
-tag = "v1"
+tag = "v1.0.1"
 new_classes = ["DurableState"]
 
 # Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
